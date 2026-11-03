@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Halloween Spooky Fun - เว็บฮาโลวีนสุดฮากับเพื่อนๆ</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        spooky: {
+                            orange: '#FF6B00',
+                            darkOrange: '#CC5200',
+                            purple: '#6B21A8',
+                            darkPurple: '#3B0764',
+                            green: '#10B981',
+                            black: '#0F0F13',
+                            darkCard: '#1C1A27'
+                        }
+                    },
+                    fontFamily: {
+                        prompt: ['Prompt', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                        'wiggle': 'wiggle 0.5s ease-in-out infinite',
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'ghost-hover': 'ghostHover 4s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-15px) rotate(3deg)' },
+                        },
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' },
+                        },
+                        ghostHover: {
+                            '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+                            '50%': { transform: 'translate(10px, -15px) scale(1.05)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #0F0F13;
+            background-image: radial-gradient(#2E1065 1px, transparent 1px), radial-gradient(#FF6B00 1px, #0F0F13 1px);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0F0F13;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FF6B00;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #CC5200;
+        }
+
+        .tab-btn.active {
+            background-color: #FF6B00;
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(255, 107, 0, 0.5);
+        }
+
+        /* 3D Flip Card Effect */
+        .perspective {
+            perspective: 1000px;
+        }
+        .flip-card-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            backface-visibility: hidden;
+        }
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+
+        /* Sound Button Pulse */
+        .sound-btn:active {
+            transform: scale(0.92);
+        }
+    </style>
+</head>
+<body class="text-white min-h-screen flex flex-col justify-between overflow-x-hidden relative selection:bg-spooky-orange selection:text-white">
+
+    <!-- Floating Background Monsters/Emojis -->
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-30">
+        <div class="absolute top-10 left-5 text-4xl sm:text-6xl animate-float">👻</div>
+        <div class="absolute top-1/4 right-8 text-5xl sm:text-7xl animate-float" style="animation-delay: 1s;">🎃</div>
+        <div class="absolute bottom-20 left-10 text-4xl sm:text-6xl animate-float" style="animation-delay: 1.5s;">🦇</div>
+        <div class="absolute top-1/2 left-1/2 text-5xl sm:text-7xl animate-ghost-hover">🕷️</div>
+        <div class="absolute bottom-10 right-12 text-4xl sm:text-6xl animate-float" style="animation-delay: 2s;">💀</div>
+    </div>
+
+    <!-- Toast / Alert Notification Box -->
+    <div id="toast" class="fixed top-5 right-5 z-50 transform translate-x-full transition-transform duration-300 ease-in-out bg-spooky-purple border-2 border-spooky-orange text-white px-6 py-4 rounded-xl shadow-2xl flex items-center space-x-3">
+        <span id="toast-icon" class="text-2xl">👻</span>
+        <span id="toast-message" class="font-semibold">ข้อความแจ้งเตือน</span>
+    </div>
+
+    <!-- Header Section -->
+    <header class="relative z-10 text-center py-6 px-4">
+        <div class="inline-block animate-bounce mb-2">
+            <span class="text-5xl sm:text-7xl">🎃</span>
+        </div>
+        <h1 class="text-3xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-spooky-orange via-yellow-400 to-spooky-purple drop-shadow-md">
+            HALLOWEEN PARTY SPOOKY FUN!
+        </h1>
+        <p class="text-gray-300 mt-2 text-sm sm:text-base max-w-xl mx-auto">
+            เว็บวัดระดับความกลัว คำสาปฮาๆ และดวงผีหลอกประจำแก๊งเพื่อน 👻
+        </p>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="relative z-10 max-w-4xl mx-auto px-4 w-full flex-grow">
+        <!-- Navigation Tabs -->
+        <nav class="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8">
+            <button onclick="switchTab('scanner')" id="tab-scanner" class="tab-btn active px-4 py-2.5 rounded-full font-bold text-sm sm:text-base bg-spooky-darkCard border border-spooky-purple hover:border-spooky-orange transition-all duration-300 flex items-center gap-2">
+                <span>🔍</span> เครื่องสแกนผี
+            </button>
+            <button onclick="switchTab('curse')" id="tab-curse" class="tab-btn px-4 py-2.5 rounded-full font-bold text-sm sm:text-base bg-spooky-darkCard border border-spooky-purple hover:border-spooky-orange transition-all duration-300 flex items-center gap-2">
+                <span>🪄</span> สุ่มคำสาปฮาๆ
+            </button>
+            <button onclick="switchTab('cards')" id="tab-cards" class="tab-btn px-4 py-2.5 rounded-full font-bold text-sm sm:text-base bg-spooky-darkCard border border-spooky-purple hover:border-spooky-orange transition-all duration-300 flex items-center gap-2">
+                <span>🔮</span> ทายดวงผีหลอก
+            </button>
+            <button onclick="switchTab('sounds')" id="tab-sounds" class="tab-btn px-4 py-2.5 rounded-full font-bold text-sm sm:text-base bg-spooky-darkCard border border-spooky-purple hover:border-spooky-orange transition-all duration-300 flex items-center gap-2">
+                <span>🔊</span> เอฟเฟกต์เสียงกวน
+            </button>
+        </nav>
+
+        <!-- TAB 1: Ghost Scanner Mode -->
+        <section id="section-scanner" class="tab-content bg-spooky-darkCard/90 border-2 border-spooky-purple rounded-3xl p-6 sm:p-8 backdrop-blur-md shadow-2xl transition-all">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl sm:text-3xl font-bold text-spooky-orange flex items-center justify-center gap-2">
+                    <span>🧬</span> เครื่องสแกนระดับความเปรี้ยว & ผีในตัว
+                </h2>
+                <p class="text-gray-400 text-sm mt-1">ใส่ชื่อเพื่อนแล้วมาสแกนดูว่าซ่อนผีอะไรไว้อยู่!</p>
+            </div>
+
+            <form onsubmit="scanFriend(event)" class="max-w-md mx-auto space-y-4">
+                <div>
+                    <label for="friend-name" class="block text-left text-sm font-semibold mb-2 text-gray-300">ชื่อเพื่อนสุดซ่า:</label>
+                    <input type="text" id="friend-name" required placeholder="เช่น บอย ออสติน, เจ๊สมศรี..." class="w-full px-4 py-3 rounded-xl bg-spooky-black border-2 border-spooky-purple focus:border-spooky-orange focus:outline-none text-white text-lg placeholder-gray-500 transition-colors">
+                </div>
+                <button type="submit" id="btn-scan" class="w-full py-4 bg-gradient-to-r from-spooky-orange to-red-600 hover:from-spooky-darkOrange hover:to-red-700 text-white font-extrabold text-xl rounded-xl shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <span>⚡</span> สแกนวิญญาณทันที!
+                </button>
+            </form>
+
+            <!-- Scanning Animation Overlay (Hidden initially) -->
+            <div id="scan-loading" class="hidden my-8 text-center py-8">
+                <div class="relative w-24 h-24 mx-auto mb-4">
+                    <div class="absolute inset-0 border-4 border-spooky-orange border-t-transparent rounded-full animate-spin"></div>
+                    <div class="absolute inset-2 border-4 border-spooky-purple border-b-transparent rounded-full animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-3xl animate-pulse">💀</div>
+                </div>
+                <p id="loading-text" class="text-spooky-orange font-bold text-lg animate-pulse">กำลังวิเคราะห์คลื่นพลังงานความหลอน...</p>
+            </div>
+
+            <!-- Result Box (Hidden initially) -->
+            <div id="scan-result" class="hidden mt-8 border-2 border-spooky-orange rounded-2xl p-6 bg-spooky-black/80 text-center relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 text-9xl opacity-10 pointer-events-none">👻</div>
+                <span id="res-badge" class="inline-block px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-spooky-purple text-spooky-orange mb-3">ผลการตรวจวิเคราะห์</span>
+                <h3 id="res-name" class="text-2xl sm:text-3xl font-extrabold text-white mb-4">คุณ...</h3>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
+                    <div class="bg-spooky-darkCard p-4 rounded-xl border border-gray-800">
+                        <div class="text-gray-400 text-xs mb-1">ระดับความผี/ความหลอน</div>
+                        <div id="res-ghost-level" class="text-3xl font-black text-spooky-orange">0%</div>
+                        <div id="res-ghost-desc" class="text-sm text-gray-300 mt-1">...</div>
+                    </div>
+                    <div class="bg-spooky-darkCard p-4 rounded-xl border border-gray-800">
+                        <div class="text-gray-400 text-xs mb-1">ระดับความกลัวผี</div>
+                        <div id="res-fear-level" class="text-3xl font-black text-purple-400">0%</div>
+                        <div id="res-fear-desc" class="text-sm text-gray-300 mt-1">...</div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-spooky-purple/40 to-spooky-orange/30 p-4 rounded-xl border border-spooky-orange/30 my-4">
+                    <span class="text-xs text-gray-300 block mb-1">ผีสิงร่างที่เหมือนที่สุดในสายเลือด:</span>
+                    <h4 id="res-ghost-type" class="text-xl sm:text-2xl font-bold text-yellow-300">ผีตลกประจำบ้าน</h4>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-3 mt-6">
+                    <button onclick="shareResult()" class="px-5 py-2.5 bg-spooky-green hover:bg-emerald-600 text-white font-bold rounded-xl shadow transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-share-nodes"></i> แชร์ผลลัพธ์ให้เพื่อน
+                    </button>
+                    <button onclick="resetScan()" class="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl shadow transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-right"></i> สแกนคนใหม่
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: Spooky Curse Randomizer -->
+        <section id="section-curse" class="tab-content hidden bg-spooky-darkCard/90 border-2 border-spooky-purple rounded-3xl p-6 sm:p-8 backdrop-blur-md shadow-2xl">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl sm:text-3xl font-bold text-spooky-orange flex items-center justify-center gap-2">
+                    <span>🪄</span> หม้อต้มสุ่มคำสาปตลกๆ
+                </h2>
+                <p class="text-gray-400 text-sm mt-1">กดปุ่มสุ่มคำสาปฮาๆ แล้วส่งไปแกล้งเพื่อนในแชท!</p>
+            </div>
+
+            <!-- Cauldron Illustration Area -->
+            <div class="relative w-40 h-40 mx-auto my-4 flex items-center justify-center">
+                <div class="text-8xl animate-bounce">🥣</div>
+                <div class="absolute top-2 text-3xl animate-ping opacity-75">✨</div>
+                <div class="absolute -top-2 right-4 text-2xl animate-pulse">🧪</div>
+            </div>
+
+            <div class="text-center max-w-md mx-auto space-y-4">
+                <button onclick="generateCurse()" class="w-full py-4 bg-gradient-to-r from-purple-600 to-spooky-orange hover:from-purple-700 hover:to-spooky-darkOrange text-white font-extrabold text-xl rounded-xl shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <span>💥</span> ร่ายคำสาปทันที!
+                </button>
+            </div>
+
+            <!-- Curse Display Box -->
+            <div id="curse-result" class="hidden mt-8 bg-spooky-black border-2 border-dashed border-spooky-orange rounded-2xl p-6 text-center relative">
+                <span class="text-5xl mb-3 block">📜</span>
+                <h3 class="text-xs font-bold text-spooky-orange tracking-widest uppercase mb-2">คัมภีร์คำสาปศักดิ์สิทธิ์</h3>
+                <p id="curse-text" class="text-xl sm:text-2xl font-bold text-yellow-300 leading-relaxed my-4">
+                    "ขอสาปให้..."
+                </p>
+                <button onclick="copyCurse()" class="px-6 py-2.5 bg-spooky-purple hover:bg-purple-800 text-white font-bold rounded-xl shadow transition-all inline-flex items-center gap-2">
+                    <i class="fa-regular fa-copy"></i> คัดลอกคำสาปไปแกล้งเพื่อน
+                </button>
+            </div>
+        </section>
+
+        <!-- TAB 3: Ghost Tarot Cards -->
+        <section id="section-cards" class="tab-content hidden bg-spooky-darkCard/90 border-2 border-spooky-purple rounded-3xl p-6 sm:p-8 backdrop-blur-md shadow-2xl">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl sm:text-3xl font-bold text-spooky-orange flex items-center justify-center gap-2">
+                    <span>🔮</span> การ์ดทายดวงผีหลอก
+                </h2>
+                <p class="text-gray-400 text-sm mt-1">ตั้งจิตอธิษฐาน แล้วเลือกการ์ด 1 ใบจาก 3 ใบเพื่อเปิดดวงสุดป่วน</p>
+            </div>
+
+            <!-- Cards Container -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 my-8 max-w-3xl mx-auto">
+                <!-- Card 1 -->
+                <div class="flip-card perspective h-64 cursor-pointer" onclick="flipTarotCard(this, 0)">
+                    <div class="flip-card-inner relative w-full h-full rounded-2xl shadow-xl">
+                        <!-- Card Front (Back of tarot) -->
+                        <div class="flip-card-front absolute inset-0 bg-gradient-to-br from-spooky-purple to-black border-2 border-spooky-orange rounded-2xl flex flex-col items-center justify-center p-4">
+                            <span class="text-5xl mb-2 animate-pulse">🃏</span>
+                            <span class="text-sm font-bold text-spooky-orange">การ์ดใบที่ 1</span>
+                            <span class="text-xs text-gray-400 mt-1">แตะเพื่อเปิดดวง</span>
+                        </div>
+                        <!-- Card Back (Revealed Tarot) -->
+                        <div class="flip-card-back absolute inset-0 bg-spooky-black border-2 border-yellow-400 rounded-2xl flex flex-col items-center justify-center p-4 text-center">
+                            <span class="card-emoji text-5xl mb-2">👻</span>
+                            <h4 class="card-title font-bold text-yellow-400 text-lg">...</h4>
+                            <p class="card-desc text-xs text-gray-300 mt-2">...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="flip-card perspective h-64 cursor-pointer" onclick="flipTarotCard(this, 1)">
+                    <div class="flip-card-inner relative w-full h-full rounded-2xl shadow-xl">
+                        <div class="flip-card-front absolute inset-0 bg-gradient-to-br from-spooky-purple to-black border-2 border-spooky-orange rounded-2xl flex flex-col items-center justify-center p-4">
+                            <span class="text-5xl mb-2 animate-pulse">🃏</span>
+                            <span class="text-sm font-bold text-spooky-orange">การ์ดใบที่ 2</span>
+                            <span class="text-xs text-gray-400 mt-1">แตะเพื่อเปิดดวง</span>
+                        </div>
+                        <div class="flip-card-back absolute inset-0 bg-spooky-black border-2 border-yellow-400 rounded-2xl flex flex-col items-center justify-center p-4 text-center">
+                            <span class="card-emoji text-5xl mb-2">💀</span>
+                            <h4 class="card-title font-bold text-yellow-400 text-lg">...</h4>
+                            <p class="card-desc text-xs text-gray-300 mt-2">...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="flip-card perspective h-64 cursor-pointer" onclick="flipTarotCard(this, 2)">
+                    <div class="flip-card-inner relative w-full h-full rounded-2xl shadow-xl">
+                        <div class="flip-card-front absolute inset-0 bg-gradient-to-br from-spooky-purple to-black border-2 border-spooky-orange rounded-2xl flex flex-col items-center justify-center p-4">
+                            <span class="text-5xl mb-2 animate-pulse">🃏</span>
+                            <span class="text-sm font-bold text-spooky-orange">การ์ดใบที่ 3</span>
+                            <span class="text-xs text-gray-400 mt-1">แตะเพื่อเปิดดวง</span>
+                        </div>
+                        <div class="flip-card-back absolute inset-0 bg-spooky-black border-2 border-yellow-400 rounded-2xl flex flex-col items-center justify-center p-4 text-center">
+                            <span class="card-emoji text-5xl mb-2">🎃</span>
+                            <h4 class="card-title font-bold text-yellow-400 text-lg">...</h4>
+                            <p class="card-desc text-xs text-gray-300 mt-2">...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button onclick="resetTarotCards()" class="px-6 py-2.5 bg-spooky-purple hover:bg-purple-800 text-white font-bold rounded-xl shadow transition-all inline-flex items-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> สับการ์ดใหม่
+                </button>
+            </div>
+        </section>
+
+        <!-- TAB 4: Sound Effects Soundboard -->
+        <section id="section-sounds" class="tab-content hidden bg-spooky-darkCard/90 border-2 border-spooky-purple rounded-3xl p-6 sm:p-8 backdrop-blur-md shadow-2xl">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl sm:text-3xl font-bold text-spooky-orange flex items-center justify-center gap-2">
+                    <span>🔊</span> Soundboard เอฟเฟกต์เสียงหลอนป่วน
+                </h2>
+                <p class="text-gray-400 text-sm mt-1">กดเปิดเสียงกดแกล้งเพื่อนรอบข้าง (สร้างด้วย Web Audio Synthesizer)</p>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto my-6">
+                <button onclick="playSound('witch')" class="sound-btn p-5 bg-spooky-black border-2 border-spooky-orange hover:border-yellow-400 rounded-2xl text-center transition-all shadow-lg flex flex-col items-center justify-center">
+                    <span class="text-4xl mb-2">🧙‍♀️</span>
+                    <span class="font-bold text-sm text-yellow-300">แม่มดหัวเราะ</span>
+                </button>
+                <button onclick="playSound('ghost')" class="sound-btn p-5 bg-spooky-black border-2 border-spooky-purple hover:border-spooky-orange rounded-2xl text-center transition-all shadow-lg flex flex-col items-center justify-center">
+                    <span class="text-4xl mb-2">👻</span>
+                    <span class="font-bold text-sm text-purple-300">เสียงผีหลอน</span>
+                </button>
+                <button onclick="playSound('jump')" class="sound-btn p-5 bg-spooky-black border-2 border-red-600 hover:border-red-400 rounded-2xl text-center transition-all shadow-lg flex flex-col items-center justify-center">
+                    <span class="text-4xl mb-2">😱</span>
+                    <span class="font-bold text-sm text-red-400">ตกใจสุดขีด</span>
+                </button>
+                <button onclick="playSound('bat')" class="sound-btn p-5 bg-spooky-black border-2 border-emerald-600 hover:border-emerald-400 rounded-2xl text-center transition-all shadow-lg flex flex-col items-center justify-center">
+                    <span class="text-4xl mb-2">🦇</span>
+                    <span class="font-bold text-sm text-emerald-300">ค้างคาวบิน</span>
+                </button>
+                <button onclick="playSound('thunder')" class="sound-btn p-5 bg-spooky-black border-2 border-blue-600 hover:border-blue-400 rounded-2xl text-center transition-all shadow-lg flex flex-col items-center justify-center">
+                    <span class="text-4xl mb-2">⚡</span>
+                    <span class="font-bold text-sm text-blue-300">ฟ้าร้องหลอน</span>
+                </button>
+                <button onclick="playSound('fart')" class="sound-btn p-5 bg-spooky-black border-2 border-yellow-600 hover:border-yellow-400 rounded-2xl text-center transition-all shadow-lg flex flex-col items-center justify-center">
+                    <span class="text-4xl mb-2">💨</span>
+                    <span class="font-bold text-sm text-yellow-400">ผีตดใส่หน้า</span>
+                </button>
+                <button onclick="playSound('monster')" class="sound-btn p-5 bg-spooky-black border-2 border-pink-600 hover:border-pink-400 rounded-2xl text-center transition-all shadow-lg flex flex-col items-center justify-center">
+                    <span class="text-4xl mb-2">👹</span>
+                    <span class="font-bold text-sm text-pink-300">อสูรกายคำราม</span>
+                </button>
+                <button onclick="playSound('door')" class="sound-btn p-5 bg-spooky-black border-2 border-gray-600 hover:border-gray-400 rounded-2xl text-center transition-all shadow-lg flex flex-col items-center justify-center">
+                    <span class="text-4xl mb-2">🚪</span>
+                    <span class="font-bold text-sm text-gray-300">ประตูเฮี้ยน</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="relative z-10 text-center py-6 text-gray-500 text-xs sm:text-sm">
+        <p>🎃 Halloween Party Spooky Fun - สร้างเพื่อความบันเทิงในหมู่เพื่อนฝูง 👻</p>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- Navigation Logic ---
+        function switchTab(tabId) {
+            // Play tab click sound
+            playBeepSound(400, 0.05);
+
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            // Remove active class from buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+        }
+
+        // --- Toast Alert Notification ---
+        function showToast(message, icon = '🎃') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = message;
+            document.getElementById('toast-icon').textContent = icon;
+
+            toast.classList.remove('translate-x-full');
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+            }, 3000);
+        }
+
+        // --- Data Pools ---
+        const ghostTypes = [
+            "ผีเสื้อราตรี (สายปาร์ตี้ดึกดื่น)",
+            "ผีปอบหยิบชานมไข่มุก",
+            "ผีจอมดองแชท (อ่านแล้วไม่ตอบ)",
+            "ผีตดเสียงดังแล้วโยนความผิดให้เพื่อน",
+            "ผีกะโหลกกะลา (ชอบฮาเวลางานซีเรียส)",
+            "ผีพรายสายเปย์ (แต่กระเป๋าแบน)",
+            "ผีสิงกินตลอดเวลา (หิวตลอด 24 ชม.)",
+            "ผีผ้าตากไม่แห้ง (กลิ่นอับระดับตำนาน)",
+            "ผีเจ้าที่ (นั่งเฝ้าโต๊ะไม่ยอมลุก)"
+        ];
+
+        const ghostLevelDescs = [
+            "หน้าตาเรียบเฉยแต่ข้างในหลอนเอาเรื่อง",
+            "น่ากลัวกว่าผี ก็หน้าเพื่อนตอนตื่นนอนนี่แหละ",
+            "ผีเปรี้ยวประจำหมู่บ้าน ใครเห็นก็ต้องเหลียว",
+            "ความน่ากลัวเป็นศูนย์ มีแต่ความกวนประสาท 100%",
+            "วิญญาณสิงร่างแบบงงๆ ผีเองยังขอบาย"
+        ];
+
+        const fearLevelDescs = [
+            "กลัวกระทั่งเงาตัวเองเดินตาม",
+            "สะดุ้งตั้งแต่จิ้งจกทักทาย",
+            "จู่โจมผีก่อนที่ผีจะทันหลอก!",
+            "ใจกล้าบ้าบิ่น ผียังต้องกราบขอทาง",
+            "กลัวอย่างเดียวคือกลัวเพื่อนไม่เลี้ยงชาบู"
+        ];
+
+        const cursesList = [
+            "ขอสาปให้กินชานมไข่มุกแล้วหลอดดัก ดูดเท่าไหร่ก็ไม่ขึ้น!",
+            "ขอสาปให้เดินเข้าห้องน้ำแล้วพบว่า... กระดาษชำระหมด!",
+            "ขอสาปให้ตดเสียงดังปั้ง! กลางห้องเรียนที่กำลังเงียบกริบ!",
+            "ขอสาปให้สะดุดขาตัวเองล้มต่อหน้าคนที่แอบชอบ!",
+            "ขอสาปให้ฝันเห็นเพื่อนแต่งชุดฟักทองมาเต้นระบำหน้าเตียง!",
+            "ขอสาปให้หยิบโทรศัพท์ขึ้นมาแล้วพบว่าแบตเตอรี่เหลือ 1%",
+            "ขอสาปให้สั่งอาหารเผ็ดน้อย แต่ได้เผ็ดระดับพริกทั้งสวน!",
+            "ขอสาปให้ใส่ถุงเท้าข้างซ้ายสลับข้างขวาตลอดทั้งวัน!"
+        ];
+
+        const tarotCardsData = [
+            { title: "ดวงผีให้โชค", emoji: "💰", desc: "วันนี้มีเกณฑ์จะได้รับของกินฟรีจากเพื่อนที่หน้าตาคล้ายผี!" },
+            { title: "ดวงผีหลอกวิญญาณหลอน", emoji: "👻", desc: "ระวังจะโดนเพื่อนทักว่า 'แกนอนน้อยเหรอ ทำไมตาโหลเหมือนผี'!" },
+            { title: "ดวงผีเสื้อราตรี", emoji: "🦇", desc: "คืนนี้ตาสว่างถึงตีสาม แต่พรุ่งนี้เช้าตื่นแปดโมงไม่ไหว!" },
+            { title: "ดวงผีปอบหิวโหย", emoji: "🍖", desc: "น้ำหนักจะเพิ่มขึ้น 2 กิโลเพราะย่องไปเปิดตู้เย็นตอนเที่ยงคืน!" },
+            { title: "ดวงผีตาโบ๋", emoji: "👀", desc: "จะมองเห็นความจริงว่า เพื่อนทุกคนแอบเอาเรื่องขำๆ ของแกไปเม้าท์!" },
+            { title: "ดวงนางทาเกลือ", emoji: "🧂", desc: "วันนี้ทำอะไรก็จะเค็มๆ หน่อย โดนยืมเงินแล้วไม่ได้คืน!" }
+        ];
+
+        let currentScanResult = "";
+
+        // --- Feature 1: Ghost Scanner ---
+        function scanFriend(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('friend-name').value.trim();
+            if (!nameInput) return;
+
+            // Hide old result & show loading
+            document.getElementById('scan-result').classList.add('hidden');
+            document.getElementById('scan-loading').classList.remove('hidden');
+
+            // Play sound
+            playSound('ghost');
+
+            setTimeout(() => {
+                // Generate deterministic or fun pseudo-random numbers based on name
+                let hash = 0;
+                for (let i = 0; i < nameInput.length; i++) {
+                    hash = nameInput.charCodeAt(i) + ((hash << 5) - hash);
+                }
+
+                const ghostPct = Math.abs(hash % 101);
+                const fearPct = Math.abs((hash * 7) % 101);
+                const ghostType = ghostTypes[Math.abs(hash) % ghostTypes.length];
+                const ghostDesc = ghostLevelDescs[Math.abs(hash) % ghostLevelDescs.length];
+                const fearDesc = fearLevelDescs[Math.abs(hash * 3) % fearLevelDescs.length];
+
+                document.getElementById('res-name').textContent = `🎃 ${nameInput}`;
+                document.getElementById('res-ghost-level').textContent = `${ghostPct}%`;
+                document.getElementById('res-ghost-desc').textContent = ghostDesc;
+                document.getElementById('res-fear-level').textContent = `${fearPct}%`;
+                document.getElementById('res-fear-desc').textContent = fearDesc;
+                document.getElementById('res-ghost-type').textContent = ghostType;
+
+                currentScanResult = `👻 ผลสแกนผีฮาโลวีนของ "${nameInput}":\n- ระดับความผี: ${ghostPct}% (${ghostDesc})\n- ระดับความกลัว: ${fearPct}%\n- ผีที่เหมือนที่สุด: ${ghostType}`;
+
+                document.getElementById('scan-loading').classList.add('hidden');
+                document.getElementById('scan-result').classList.remove('hidden');
+
+                // Confetti FX
+                confetti({
+                    particleCount: 80,
+                    spread: 60,
+                    origin: { y: 0.7 },
+                    colors: ['#FF6B00', '#6B21A8', '#10B981']
+                });
+            }, 2000);
+        }
+
+        function resetScan() {
+            document.getElementById('friend-name').value = '';
+            document.getElementById('scan-result').classList.add('hidden');
+        }
+
+        function shareResult() {
+            if (!currentScanResult) return;
+            navigator.clipboard.writeText(currentScanResult);
+            showToast('คัดลอกผลลัพธ์ลง Clipboard แล้ว! ส่งให้เพื่อนได้เลย', '📋');
+        }
+
+        // --- Feature 2: Curse Randomizer ---
+        function generateCurse() {
+            playSound('witch');
+            const curseText = cursesList[Math.floor(Math.random() * cursesList.length)];
+            const resBox = document.getElementById('curse-result');
+            
+            resBox.classList.add('hidden');
+            setTimeout(() => {
+                document.getElementById('curse-text').textContent = `"${curseText}"`;
+                resBox.classList.remove('hidden');
+            }, 200);
+
+            confetti({
+                particleCount: 50,
+                angle: 90,
+                spread: 40,
+                origin: { y: 0.6 },
+                colors: ['#FF6B00', '#EAB308']
+            });
+        }
+
+        function copyCurse() {
+            const curseText = document.getElementById('curse-text').textContent;
+            navigator.clipboard.writeText(`🎃 คำสาปฮาโลวีนประจำวัน:\n${curseText}`);
+            showToast('คัดลอกคำสาปแล้ว! เตรียมส่งแกล้งเพื่อนได้เลย', '✨');
+        }
+
+        // --- Feature 3: Tarot Cards ---
+        function flipTarotCard(cardElement, index) {
+            if (cardElement.classList.contains('flipped')) return;
+
+            playSound('thunder');
+
+            // Pick random tarot result
+            const randomData = tarotCardsData[Math.floor(Math.random() * tarotCardsData.length)];
+            
+            const backView = cardElement.querySelector('.flip-card-back');
+            backView.querySelector('.card-emoji').textContent = randomData.emoji;
+            backView.querySelector('.card-title').textContent = randomData.title;
+            backView.querySelector('.card-desc').textContent = randomData.desc;
+
+            cardElement.classList.add('flipped');
+        }
+
+        function resetTarotCards() {
+            playBeepSound(500, 0.05);
+            document.querySelectorAll('.flip-card').forEach(card => {
+                card.classList.remove('flipped');
+            });
+            showToast('สับการ์ดคำทำนายใหม่แล้ว!', '🔮');
+        }
+
+        // --- Feature 4: Web Audio Synthesizer Sound Effects ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playBeepSound(freq = 440, duration = 0.1) {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        function playSound(type) {
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+
+                if (type === 'witch') {
+                    // Cackling pitch-shifting laughter effect
+                    for (let i = 0; i < 5; i++) {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(500 + (i % 2 === 0 ? 300 : -100), now + i * 0.12);
+                        osc.frequency.exponentialRampToValueAtTime(800, now + i * 0.12 + 0.1);
+                        gain.gain.setValueAtTime(0.15, now + i * 0.12);
+                        gain.gain.linearRampToValueAtTime(0, now + i * 0.12 + 0.1);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + i * 0.12);
+                        osc.stop(now + i * 0.12 + 0.1);
+                    }
+                } else if (type === 'ghost') {
+                    // Eerie spooky siren
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.linearRampToValueAtTime(600, now + 0.7);
+                    osc.frequency.linearRampToValueAtTime(250, now + 1.4);
+                    gain.gain.setValueAtTime(0.01, now);
+                    gain.gain.linearRampToValueAtTime(0.2, now + 0.7);
+                    gain.gain.linearRampToValueAtTime(0.001, now + 1.4);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 1.4);
+                } else if (type === 'jump') {
+                    // Jumpscare loud screech
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(1200, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.4);
+                    gain.gain.setValueAtTime(0.4, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'thunder') {
+                    // Low rumble noise
+                    const bufferSize = audioCtx.sampleRate * 0.8;
+                    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                    const noise = audioCtx.createBufferSource();
+                    noise.buffer = buffer;
+
+                    const filter = audioCtx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(200, now);
+                    filter.frequency.linearRampToValueAtTime(50, now + 0.8);
+
+                    const gain = audioCtx.createGain();
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    noise.start(now);
+                    noise.stop(now + 0.8);
+                } else if (type === 'fart') {
+                    // Funny fart sound
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(120, now);
+                    osc.frequency.linearRampToValueAtTime(40, now + 0.3);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'bat') {
+                    // High pitch squeaks
+                    for (let i = 0; i < 3; i++) {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(3000, now + i * 0.08);
+                        osc.frequency.exponentialRampToValueAtTime(5000, now + i * 0.08 + 0.05);
+                        gain.gain.setValueAtTime(0.1, now + i * 0.08);
+                        gain.gain.linearRampToValueAtTime(0, now + i * 0.08 + 0.05);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + i * 0.08);
+                        osc.stop(now + i * 0.08 + 0.05);
+                    }
+                } else if (type === 'monster') {
+                    // Low growl sound
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(80, now);
+                    osc.frequency.linearRampToValueAtTime(50, now + 0.6);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.6);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.6);
+                } else if (type === 'door') {
+                    // Squeaky creak
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.linearRampToValueAtTime(700, now + 0.5);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                }
+            } catch (e) {
+                console.log("Audio not supported or restricted");
+            }
+        }
+    </script>
+</body>
+</html>
